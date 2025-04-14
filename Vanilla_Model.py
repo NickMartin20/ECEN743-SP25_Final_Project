@@ -1,10 +1,24 @@
-import os
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from huggingface_hub import hf_hub_download
 
 access_token = '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'
-model_id = "meta-llama/Llama-3.2-1B"
+model_id = "unsloth/Llama-3.2-1B"
+filenames = [
+    'config.json',
+    'generation_config.json',
+    'model.safetensors',
+    'special_tokens_map.json',
+    'tokenizer.json',
+    'tokenizer_config.json'
+]
+
+for filename in filenames:
+    download_model_path = hf_hub_download(
+        repo_id=model_id,
+        filename=filename,
+        token=access_token
+    )
 
 # Load tokenizer and model
 tokenizer = AutoTokenizer.from_pretrained(model_id, padding_side='left')
@@ -12,7 +26,7 @@ model = AutoModelForCausalLM.from_pretrained(model_id)
 
 chat_history_ids = None
 
-for step in range(5):
+for step in range(1):
     user_input = input(">> User: ")
 
     new_input = tokenizer(user_input, return_tensors='pt', add_special_tokens=True)
