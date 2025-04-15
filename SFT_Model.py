@@ -6,6 +6,8 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from huggingface_hub import hf_hub_download
 from trl import SFTConfig, SFTTrainer
 
+print('Imports Complete')
+
 ####### Loading in the model #######
 bnb_config = BitsAndBytesConfig(
     load_in_8bit=True, 
@@ -14,13 +16,16 @@ bnb_config = BitsAndBytesConfig(
     bnb_8pipbit_compute_dtype=torch.float32
 )
 
+print('Bits and Bytes Config Complete')
+
 #change this repo_id to the dir of your model
 repo_id = '/scratch/user/nmartin20/ECEN743_SP25_Final_Project/pretrained_models/llama3-model'
 model = AutoModelForCausalLM.from_pretrained(
-    repo_id, device_map="cuda:0", quantization_config=bnb_config
+    repo_id, device_map="cuda:0", quantization_config=bnb_config, local_files_only=True
 )
 ###DEBUG###
 #Shows how much space the model occupies in memory
+print('MODEL LOADED')
 print(model.get_memory_footprint()/1e6)
 ###########
 
@@ -63,7 +68,7 @@ dataset_id =''
 dataset = load_dataset(dataset_id, split="train")
 
 ####### Loading the Tokenizer #######
-tokenizer = AutoTokenizer.from_pretrained(repo_id) #load the tokenizer: converts words and letters to tokens
+tokenizer = AutoTokenizer.from_pretrained(repo_id, local_files_only=True) #load the tokenizer: converts words and letters to tokens
 
 #THESE LINES MAY POTENTIAL CAUSE ISSUES FOR LLAMA-3.2 if EOS token is masked in the labels of the dataset
 tokenizer.pad_token = tokenizer.unk_token
