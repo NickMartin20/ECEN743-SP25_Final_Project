@@ -14,7 +14,8 @@ bnb_config = BitsAndBytesConfig(
     bnb_8pipbit_compute_dtype=torch.float32
 )
 
-repo_id = 'unsloth/Llama-3.2-1B'
+#change this repo_id to the dir of your model
+repo_id = '/scratch/user/nmartin20/ECEN743_SP25_Final_Project/pretrained_models/llama3-model'
 model = AutoModelForCausalLM.from_pretrained(
     repo_id, device_map="cuda:0", quantization_config=bnb_config
 )
