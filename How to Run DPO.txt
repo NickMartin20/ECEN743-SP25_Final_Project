@@ -1,0 +1,38 @@
+How to Run DPO
+
+1-check if the packages are installed in the environment
+
+RUN THIS -->  bash check_env.sh
+OR --> copy paste the content of check_env file
+
+if not, pip install the following
+
+pip install \
+  torch \
+  transformers \
+  datasets \
+  accelerate \
+  peft \
+  trl \
+  bitsandbytes \
+  huggingface_hub \
+  sentencepiece \
+  protobuf \
+  pyyaml
+
+
+2-change the directories in the config file
+-for the base model
+-for the lora .bin directory
+-OPTIONAL output location
+
+3-check that all files are in place
+-run_dpo.py
+-config yaml file
+-Lora .bin
+-base model
+-run_dpo_cluster
+
+4- RUN the run_dpo_cluster.slurm file
+
+sbatch run_dpo_cluster.slurm
