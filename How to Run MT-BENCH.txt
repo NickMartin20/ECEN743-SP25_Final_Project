@@ -1,0 +1,28 @@
+How to Run MT-BENCH
+
+1-install shit
+
+git clone https://github.com/lm-sys/FastChat.git
+cd FastChat
+pip install -e .
+
+2-Launch Model
+
+python3 -m fastchat.serve.cli --model-path /path/to/your/model
+
+3-Run this script
+
+python3 -m fastchat.llm_judge.gen_model_answer \
+  --model-name your-model-name \
+  --model-path /path/to/your/model \
+  --answers-file model_answers.json
+
+
+4-Use GPT4 as judge (need OpenAi key)
+
+export OPENAI_API_KEY="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+echo $OPENAI_API_KEY
+python3 -m fastchat.llm_judge.judge_openai \
+  --model-answer-file model_answers.json \
+  --output-file model_scores.json \
+  --parallel 4
