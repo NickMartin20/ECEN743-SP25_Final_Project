@@ -1,4 +1,3 @@
-
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
@@ -8,6 +7,7 @@ import pandas as pd
 from evaluate.visualization import radar_plot
 import os
 from datetime import datetime
+from sklearn.metrics import confusion_matrix, classification_report
 
 # Safe matplotlib import
 try:
@@ -15,8 +15,6 @@ try:
 except ImportError:
     print("[ERROR] matplotlib not found! Please install it. Exiting...")
     exit(1)
-
-from sklearn.metrics import confusion_matrix, classification_report
 
 # ---------------------------
 # 0. Helper: Check Metrics Cached
@@ -44,7 +42,7 @@ if missing:
 # ---------------------------
 
 base_model_path = "/scratch/user/lhuangxu/ECEN743_Final/ECEN743-SP25_Final_Project/llama3_model"
-adapter_path = "/scratch/user/lhuangxu/ECEN743_Final/ECEN743-SP25_Final_Project/checkpoint-30920"
+adapter_path = "/scratch/user/lhuangxu/ECEN743_Final/ECEN743-SP25_Final_Project/data/DPO_CONFIDENCE/"
 
 model = AutoModelForCausalLM.from_pretrained(
     base_model_path,
@@ -73,7 +71,7 @@ xsum = load_from_disk("/scratch/user/lhuangxu/ECEN743_Final/ECEN743-SP25_Final_P
 accuracy_metric = evaluate.load("accuracy")
 f1_metric = evaluate.load("f1")
 rouge_metric = evaluate.load("rouge")
-bleu_metric = evaluate.load("bleu")
+bleu_metric = evaluate.load("bleu")  # ? Use original BLEU
 
 # ---------------------------
 # 4. MMLU Evaluation (Multiple Choice)
@@ -85,7 +83,7 @@ default_guess = 0  # Guess "A" if invalid
 predictions_mmlu = []
 references_mmlu = []
 
-for example in mmlu['test'].select(range(30)):  # Small sample
+for example in mmlu['test'].select(range(30)):
     question = example['question']
     choices = example['choices']
     correct_answer = example['answer']
@@ -166,20 +164,22 @@ rouge1 = rouge_scores['rouge1']
 rouge2 = rouge_scores['rouge2']
 rougeL = rouge_scores['rougeL']
 
-# BLEU needs reference format: List of list of references
-bleu_score = bleu_metric.compute(predictions=predictions_rouge, references=[[ref] for ref in references_rouge])['bleu']
+# BLEU needs: List of strings + List of list of strings
+bleu_score = bleu_metric.compute(
+    predictions=predictions_rouge,
+    references=[[ref] for ref in references_rouge]
+)['bleu']
+print(f"[OK] BLEU score computed: {bleu_score:.4f}")
 
 # ---------------------------
 # 6. Save Results and Outputs
 # ---------------------------
 
-# Timestamp
 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-output_dir = f"/scratch/user/lhuangxu/ECEN743_Final/ECEN743-SP25_Final_Project/eval_outputs_DPO_LLAMA/{timestamp}"
+output_dir = f"/scratch/user/lhuangxu/ECEN743_Final/ECEN743-SP25_Final_Project/eval_outputs_DPO_LLAMA/"
 os.makedirs(output_dir, exist_ok=True)
 print(f"[OK] Output folder ready: {output_dir}")
 
-# Save CSV
 csv_filename = f"evaluation_results_{timestamp}.csv"
 results_csv_path = os.path.join(output_dir, csv_filename)
 results_dict = {
@@ -193,8 +193,7 @@ results_dict = {
 results_df = pd.DataFrame([results_dict])
 results_df.to_csv(results_csv_path, index=False)
 print(f"[OK] Saved CSV to {results_csv_path}")
-
-# Save radar plot
+"""
 plot = radar_plot(
     data=[results_dict],
     model_names=["My-LLM-Adapter"],
@@ -203,5 +202,4 @@ plot = radar_plot(
 plot_png_path = os.path.join(output_dir, "evaluation_radar_plot.png")
 plot.figure.savefig(plot_png_path, dpi=300)
 print(f"[OK] Saved radar plot to {plot_png_path}")
-
-
+"""

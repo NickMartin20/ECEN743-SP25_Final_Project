@@ -37,7 +37,7 @@ from alignment import (
     is_adapter_model,
 )
 from peft import PeftConfig, PeftModel
-from trl import DPOTrainer
+from trl import DPOTrainerWithConfidence
 
 
 logger = logging.getLogger(__name__)
@@ -112,23 +112,20 @@ def main():
     tokenizer.save_pretrained(training_args.output_dir)  # save for consistency
     
 
-
-    #####################
-    # Apply chat template
-    #####################
-    """
-    raw_datasets = raw_datasets.map(
-        apply_chat_template,
-        fn_kwargs={
-            "tokenizer": tokenizer,
-            "task": "dpo",
-            "auto_insert_empty_system_msg": data_args.auto_insert_empty_system_msg,
-        },
-        num_proc=data_args.preprocessing_num_workers,
-        remove_columns=column_names,
-        desc="Formatting comparisons with prompt template",
-    )"""
     
+    
+    
+    sft_base_model = AutoModelForCausalLM.from_pretrained(
+    model_args.base_model_revision,  # from parsed YAML
+    torch_dtype=model_args.torch_dtype,  # use same dtype
+    device_map="auto",
+    )
+
+    sft_model = PeftModel.from_pretrained(
+        sft_base_model,
+        model_args.model_name_or_path,  # from parsed YAML
+    )
+    sft_model.eval()
     ##########################
     # Decontaminate benchmarks
     ##########################
@@ -217,9 +214,10 @@ def main():
     #########################
     # Instantiate DPO trainer
     #########################
-    trainer = DPOTrainer(
+    trainer = DPOTrainerWithConfidence(
         model=model,
         ref_model=ref_model,
+        sft_model=sft_model,
         args=training_args,         # <-- all extra configs (beta, max_length, etc.) must be inside here
         train_dataset=raw_datasets["train"],
         eval_dataset=raw_datasets["test"],
@@ -236,6 +234,7 @@ def main():
         checkpoint = training_args.resume_from_checkpoint
     elif last_checkpoint is not None:
         checkpoint = last_checkpoint
+    print(f"Free CUDA memory: {torch.cuda.mem_get_info()[0] / 1e9:.2f} GB")
     train_result = trainer.train(resume_from_checkpoint=checkpoint)
     metrics = train_result.metrics
     metrics["train_samples"] = len(raw_datasets["train"])
