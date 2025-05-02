@@ -2,7 +2,7 @@ import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from huggingface_hub import hf_hub_download
 
-access_token = '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'
+access_token = 'PLACE YOURS HERE'
 model_id = "unsloth/Llama-3.2-1B"
 filenames = [
     'config.json',
