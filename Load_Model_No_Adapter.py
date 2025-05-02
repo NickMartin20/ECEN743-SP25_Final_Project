@@ -9,21 +9,13 @@ def format_prompt(input):
 prompts = []
 responses = []
 #load in csv file
-print('Loading data', flush=True)
 with open('/scratch/user/nmartin20/ECEN743_SP25_Final_Project/prompts/QA_prompts.csv', mode = 'r')as file:
     csvFile = csv.reader(file)
-    print("CSV file opened.", flush=True)
     for lines in csvFile:
         prompts.append(lines[0])
-        
-print(prompts, flush=True)
 
 #base model location
 base_model_id = '/scratch/user/nmartin20/ECEN743_SP25_Final_Project/pretrained_models/llama3_model'
-
-#trained model location
-trained_model_id = '/scratch/user/nmartin20/ECEN743_SP25_Final_Project/Llama-3.2-1B-QA-DPO'
-#print("Files in model dir:", os.listdir(trained_model_id))
 
 #load in base model
 base_model = AutoModelForCausalLM.from_pretrained(
@@ -33,34 +25,24 @@ base_model = AutoModelForCausalLM.from_pretrained(
     local_files_only=True
 )
 
-print('Base model loaded', flush=True)
-
-#apply peft adapter
-model = PeftModel.from_pretrained(
-    base_model,
-    trained_model_id,
-    local_files_only=True
-)
-
-#Merges PEFT adapter into the base model
-model = model.merge_and_unload()
-
-print('Models have been merged', flush=True)
+print('Base Model Loaded')
 
 tokenizer = AutoTokenizer.from_pretrained(
     base_model_id,
     local_files_only=True
 )
 
+print('Tokenizer Loaded')
+
 text_generation_pipeline = pipeline(
     "text-generation",
-    model=model,
+    model=base_model,
     tokenizer=tokenizer,
     max_new_tokens = 200,
     truncation=True
 )
 
-print("###DPO_Model_Response###")
+print("###Base_Model_Response###")
 print('\n')
 print('\n')
 
@@ -70,5 +52,3 @@ for prompt in prompts:
     print('\n')
     print('\n')
     responses.append(response)
-
-
